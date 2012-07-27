@@ -30,3 +30,8 @@ Ticketed Tournaments
 ====================
 
 My current understanding is that results for ticketed tournaments are only accessible via the api if you also have access through the client. i.e. you need a ticket tied to your account to get the results via the api.
+
+Error 503 Service Temporarily Unavailable
+=========================================
+
+This sometimes happens with the API at the moment, simply try again or wait a few minutes and try again.
