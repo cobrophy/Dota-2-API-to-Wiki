@@ -14,16 +14,13 @@ while True:
     MatchId = sys.argv[1]
     break
   except:
+    print "Error: Argument required"
     print "You must enter a valid number for the match id."
     print "E.G. python DotaApiToWiki.py 12345678"
     sys.exit()
     
 if len(MatchId) != 8:
-  print "You must enter a valid number for the match id."
-  print "E.G. python DotaApiToWiki.py 12345678"
-  sys.exit()
-
-if isinstance(MatchId, int) == False:
+  print "Error: Match Id wrong length"
   print "You must enter a valid number for the match id."
   print "E.G. python DotaApiToWiki.py 12345678"
   sys.exit()
@@ -41,29 +38,28 @@ MatchData = json.loads(UrlData)
 
 JsonDate = MatchData[u'result'][u'starttime']
 JsonWinner = MatchData[u'result'][u'radiant_win']
-JsonRadiantTeam = MatchData[u'result'][u'radiant_name']
-JsonDireTeam = MatchData[u'result'][u'dire_name']
 
-JsonRadiant1Name = MatchData[u'result'][u'players'][0][u'player_name']
-JsonRadiant1Hero = MatchData[u'result'][u'players'][0][u'hero_id']
-JsonRadiant2Name = MatchData[u'result'][u'players'][1][u'player_name']
-JsonRadiant2Hero = MatchData[u'result'][u'players'][1][u'hero_id']
-JsonRadiant3Name = MatchData[u'result'][u'players'][2][u'player_name']
-JsonRadiant3Hero = MatchData[u'result'][u'players'][2][u'hero_id']
-JsonRadiant4Name = MatchData[u'result'][u'players'][3][u'player_name']
-JsonRadiant4Hero = MatchData[u'result'][u'players'][3][u'hero_id']
-JsonRadiant5Name = MatchData[u'result'][u'players'][4][u'player_name']
-JsonRadiant5Hero = MatchData[u'result'][u'players'][4][u'hero_id']
-JsonDire1Name = MatchData[u'result'][u'players'][5][u'player_name']
-JsonDire1Hero = MatchData[u'result'][u'players'][5][u'hero_id']
-JsonDire2Name = MatchData[u'result'][u'players'][6][u'player_name']
-JsonDire2Hero = MatchData[u'result'][u'players'][6][u'hero_id']
-JsonDire3Name = MatchData[u'result'][u'players'][7][u'player_name']
-JsonDire3Hero = MatchData[u'result'][u'players'][7][u'hero_id']
-JsonDire4Name = MatchData[u'result'][u'players'][8][u'player_name']
-JsonDire4Hero = MatchData[u'result'][u'players'][8][u'hero_id']
-JsonDire5Name = MatchData[u'result'][u'players'][9][u'player_name']
-JsonDire5Hero = MatchData[u'result'][u'players'][9][u'hero_id']
+try:
+  JsonRadiantTeam = MatchData[u'result'][u'radiant_name']
+  JsonDireTeam = MatchData[u'result'][u'dire_name']
+except KeyError:
+  JsonRadiantTeam = ""
+  JsonDireTeam = ""
+  print "Note: No Team Names"
+
+PlayerCount = MatchData[u'result'][u'human_players']
+i = 0
+RadiantTeam = {}
+DireTeam = {}
+
+while i < PlayerCount:
+  PlayerName = MatchData[u'result'][u'players'][i][u'player_name']
+  PlayerHero = MatchData[u'result'][u'players'][i][u'hero_id']
+  if MatchData[u'result'][u'players'][i][u'player_slot'] < 10:
+    RadiantTeam[PlayerName] = PlayerHero
+  else:
+    DireTeam[PlayerName] = PlayerHero
+  i = i + 1
 
 # Converting UNIX time to date time
 
@@ -78,117 +74,120 @@ elif JsonWinner == True:
 
 # Hero Lookup for Hero Ids, may be some errors in here.
 
-HeroLookup = {
-1:'Antimage', 
-2:'Axe', 
-3:'Bane', 
-4:'Bloodseeker', 
-5:'Crystal Maiden', 
-6:'Drow Ranger', 
-7:'Earthshaker', 
-8:'Juggernaut', 
-9:'Mirana', 
-10:'Nevermore',
-11:'Morphling',
-12:'Phantom Lancer',
-13:'Puck',
-14:'Pudge',
-15:'Razor',
-16:'Sand King',
-17:'Storm Spirit',
-18:'Sven',
-19:'Tiny',
-20:'Vengeful Spirit',
-21:'Windrunner',
-22:'Zeus',
-23:'Kunkka',
-24:'',
-25:'Lina',
-26:'Lion',
-27:'Shadow Shaman',
-28:'Slardar',
-29:'Tidehunter',
-30:'Witch Doctor',
-31:'Lich',
-32:'Riki',
-33:'Enigma',
-34:'Tinker',
-35:'Sniper',
-36:'Necrolyte',
-37:'Warlock',
-38:'Beastmaster',
-39:'Queen of Pain',
-40:'Venomancer',
-41:'Faceless Void',
-42:'Skeleton King',
-43:'Death Prophet',
-44:'Phantom Assassin',
-45:'Pugna',
-46:'Templar Assassin',
-47:'Viper',
-48:'Luna',
-49:'Dragon Knight',
-50:'Dazzle',
-51:'Rattletrap',
-52:'Leshrac',
-53:'Furion',
-54:'Lifestealer',
-55:'Dark Seer',
-56:'Clinkz',
-57:'Omniknight',
-58:'Enchantress',
-59:'Huskar',
-60:'Night Stalker',
-61:'Broodmother',
-62:'Bounty Hunter',
-63:'Weaver',
-64:'Jakiro',
-65:'Batrider',
-66:'Chen',
-67:'Spectre',
-68:'Doom Bringer',
-69:'Ancient Apparition',
-70:'Ursa',
-71:'Spirit Breaker',
-72:'Gyrocopter',
-73:'Alchemist',
-74:'Invoker',
-75:'Silencer',
-76:'Obsidian Destroyer',
-77:'Lycan',
-78:'Brewmaster',
-79:'Shadow Demon',
-80:'Lone Druid',
-81:'Chaos Knight',
-82:'Meepo',
-83:'Treant Protector',
-84:'Ogre Magi',
-85:'Undying',
-86:'Rubick',
-87:'Disruptor',
-88:'Nyx Assassin',
-89:'Naga Siren',
-90:'Keeper of the Light',
-91:'Wisp',
-92:'Visage',
-93:'Slark'}
+Url = "http://api.steampowered.com/IEconDOTA2_570/GetHeroes/v0001/?language=english&key=" + MyKey
+
+UrlData = urllib2.urlopen(Url).read()
+HeroData = json.loads(UrlData)
+
+HeroCount = HeroData[u'result'][u'count']
+j = 0
+HeroLookup = {}
+while j < HeroCount:
+  HeroId = HeroData[u'result'][u'heroes'][j][u'id']
+  HeroName = HeroData[u'result'][u'heroes'][j][u'localized_name']
+  HeroLookup[HeroId] = HeroName 
+  j = j + 1
 
 # Converting Ids to Names
 
-WikiRadiant1Hero = HeroLookup[JsonRadiant1Hero]
-WikiRadiant2Hero = HeroLookup[JsonRadiant2Hero]
-WikiRadiant3Hero = HeroLookup[JsonRadiant3Hero]
-WikiRadiant4Hero = HeroLookup[JsonRadiant4Hero]
-WikiRadiant5Hero = HeroLookup[JsonRadiant5Hero]
-WikiDire1Hero = HeroLookup[JsonDire1Hero]
-WikiDire2Hero = HeroLookup[JsonDire2Hero]
-WikiDire3Hero = HeroLookup[JsonDire3Hero]
-WikiDire4Hero = HeroLookup[JsonDire4Hero]
-WikiDire5Hero = HeroLookup[JsonDire5Hero]
+k = 0
+while k < len(RadiantTeam.values()):
+  TrialId = RadiantTeam.values()[k]
+  TrialName = HeroLookup[TrialId]
+  KeyName = RadiantTeam.keys()[k]
+  RadiantTeam[KeyName] = TrialName
+  k = k + 1
 
+l = 0
+while l < len(DireTeam.values()):
+  TrialId = DireTeam.values()[l]
+  TrialName = HeroLookup[TrialId]
+  KeyName = DireTeam.keys()[l]
+  DireTeam[KeyName] = TrialName
+  l = l + 1
+
+print RadiantTeam.items()
+print DireTeam.items()
+
+# Assigning Players and Heroes to Wiki Variables
+
+if len(RadiantTeam) > 0:
+  player1 = RadiantTeam.keys()[0]
+  hero1 = RadiantTeam.values()[0]
+else:
+  player1 = ""
+  hero1 = ""
+
+if len(RadiantTeam) > 1:
+  player2 = RadiantTeam.keys()[1]
+  hero2 = RadiantTeam.values()[1]
+else:
+  player2 = ""
+  hero2 = ""
+  
+if len(RadiantTeam) > 2:
+  player3 = RadiantTeam.keys()[2]
+  hero3 = RadiantTeam.values()[2]
+else:
+  player3 = ""
+  hero3 = ""
+  
+if len(RadiantTeam) > 3:
+  player4 = RadiantTeam.keys()[3]
+  hero4 = RadiantTeam.values()[3]
+else:
+  player4 = ""
+  hero4 = ""
+  
+if len(RadiantTeam) > 3:
+  player5 = RadiantTeam.keys()[4]
+  hero5 = RadiantTeam.values()[4]
+else: 
+  player5 = ""
+  hero5 = ""
+
+if len(DireTeam) > 0:
+  player6 = DireTeam.keys()[0]
+  hero6 = DireTeam.values()[0]
+else:
+  player6 = ""
+  hero6 = ""
+
+if len(DireTeam) > 1:
+  player7 = DireTeam.keys()[1]
+  hero7 = DireTeam.values()[1]
+else:
+  player7 = ""
+  hero7 = ""
+  
+if len(DireTeam) > 2:
+  player8 = DireTeam.keys()[2]
+  hero8 = DireTeam.values()[2]
+else:
+  player8 = ""
+  hero8 = ""
+  
+if len(DireTeam) > 3:
+  player9 = DireTeam.keys()[3]
+  hero9 = DireTeam.values()[3]
+else:
+  player9 = ""
+  hero9 = ""
+  
+if len(DireTeam) > 3:
+  player10 = DireTeam.keys()[4]
+  hero10 = DireTeam.values()[4]
+else: 
+  player10 = ""
+  hero10 = ""
+  
 # Generating unique file name for output
+if len(JsonRadiantTeam) > 0:
+  match = JsonRadiantTeam + ' v ' + JsonDireTeam
+else:
+  match = "Public Matchmaking"
 
-filename = str(MatchId) + " - " + JsonRadiantTeam + ' v ' + JsonDireTeam
+filename = str(MatchId) + " - " + match
 
 # Writing output to file
 
@@ -201,27 +200,27 @@ f.write(
 '| team2        = [[' + JsonDireTeam + ']]\n' +
 '| stadium      = \n' +
 '<!-- Radiant Heroes -->\n' +
-'| player1      = ' + JsonRadiant1Name + '\n' +
-'| hero1        = ' + WikiRadiant1Hero + '\n' +
-'| player2      = ' + JsonRadiant2Name + '\n' +
-'| hero2        = ' + WikiRadiant2Hero + '\n' +
-'| player3      = ' + JsonRadiant3Name + '\n' +
-'| hero3        = ' + WikiRadiant3Hero + '\n' +
-'| player4      = ' + JsonRadiant4Name + '\n' +
-'| hero4        = ' + WikiRadiant4Hero + '\n' +
-'| player5      = ' + JsonRadiant5Name + '\n' +
-'| hero5        = ' + WikiRadiant5Hero + '\n' +
+'| player1      = ' + player1 + '\n' +
+'| hero1        = ' + hero1 + '\n' +
+'| player2      = ' + player2 + '\n' +
+'| hero2        = ' + hero2 + '\n' +
+'| player3      = ' + player3 + '\n' +
+'| hero3        = ' + hero3 + '\n' +
+'| player4      = ' + player4 + '\n' +
+'| hero4        = ' + hero4 + '\n' +
+'| player5      = ' + player5 + '\n' +
+'| hero5        = ' + hero5 + '\n' +
 '<!-- Dire Heroes -->\n' +
-'| player6      = ' + JsonDire1Name + '\n' +
-'| hero6        = ' + WikiDire1Hero + '\n' +
-'| player7      = ' + JsonDire2Name + '\n' +
-'| hero7        = ' + WikiDire2Hero + '\n' +
-'| player8      = ' + JsonDire3Name + '\n' +
-'| hero8        = ' + WikiDire3Hero + '\n' +
-'| player9      = ' + JsonDire4Name + '\n' +
-'| hero9        = ' + WikiDire4Hero + '\n' +
-'| player10     = ' + JsonDire5Name + '\n' +
-'| hero10       = ' + WikiDire5Hero + '\n' +
+'| player6      = ' + player6 + '\n' +
+'| hero6        = ' + hero6 + '\n' +
+'| player7      = ' + player7 + '\n' +
+'| hero7        = ' + hero7 + '\n' +
+'| player8      = ' + player8 + '\n' +
+'| hero8        = ' + hero8 + '\n' +
+'| player9      = ' + player9 + '\n' +
+'| hero9        = ' + hero9 + '\n' +
+'| player10     = ' + player10 + '\n' +
+'| hero10       = ' + hero10 + '\n' +
 '<!-- Replay -->\n' +
 '| replay       = \n' +
 '}}')
